@@ -1,5 +1,3 @@
-version: "3.8"
-
 networks:
   rag_network:
     driver: bridge
@@ -18,6 +16,9 @@ services:
       - OLLAMA_KV_CACHE_TYPE=q4_0
       # Habilita Flash Attention para otimizar VRAM adicional
       - OLLAMA_FLASH_ATTENTION=1
+      # Mantém chat + modelo auxiliar carregados juntos (evita recarregar a cada pergunta)
+      - OLLAMA_MAX_LOADED_MODELS=2
+      - OLLAMA_KEEP_ALIVE=30m
 
     volumes:
       - ollama_storage:/root/.ollama
@@ -47,7 +48,8 @@ services:
     container_name: rag_chromadb
 
     volumes:
-      - ./chroma_data:/chroma/chroma
+      # Volume nomeado (ext4 no WSL2) — bem mais rápido que pasta do Windows
+      - chroma_storage:/chroma/chroma
 
     ports:
       - "8000:8000"
@@ -79,6 +81,8 @@ services:
       - ./app:/app
       - ./audio:/app/audio
       - hf_cache:/root/.cache/huggingface
+      # Blocos pais + controle de arquivos indexados (SQLite)
+      - rag_index:/app/indice
 
     environment:
 
@@ -96,10 +100,14 @@ services:
       - CHAT_MODEL=qwen3:8b
       - PODCAST_MODEL=qwen3:8b
       - SUMMARY_MODEL=llama3.2:1b
+      - CHAT_NUM_CTX=8192
 
-      # Modelos de Embedding e Reranker (Adicionados)
+      # Modelos de Embedding e Reranker
       - EMBEDDING_MODEL=intfloat/multilingual-e5-large-instruct
       - RERANKER_MODEL=BAAI/bge-reranker-v2-m3
+      # cuda (fp16) ou cpu — use cpu se faltar VRAM para modelos maiores no Ollama
+      - EMBED_DEVICE=cuda
+      - RERANK_DEVICE=cuda
 
       # Kokoro
       - KOKORO_DEVICE=cuda
@@ -133,3 +141,5 @@ services:
 volumes:
   ollama_storage:
   hf_cache:
+  chroma_storage:
+  rag_index:

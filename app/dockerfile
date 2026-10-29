@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN pip install --no-cache-dir "typing-extensions==4.12.2"
 
 
-# Torch 2.6 + CUDA 12.4 — estável com RTX 5070
+# Torch 2.7.1 + CUDA 12.8 (cu128) — necessário para a RTX 5070 (Blackwell)
 RUN pip install --no-cache-dir \
     torch==2.7.1 \
     torchaudio==2.7.1 \
