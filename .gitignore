@@ -1,0 +1,15 @@
+# Dados gerados / pessoais
+audio/
+chroma_data/
+data/
+ollama_volumes/
+
+# Binários locais
+cloudflared.exe
+
+# Python
+__pycache__/
+*.pyc
+
+# Segredos
+.env

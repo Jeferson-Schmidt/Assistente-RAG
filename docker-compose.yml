@@ -1,0 +1,135 @@
+version: "3.8"
+
+networks:
+  rag_network:
+    driver: bridge
+
+services:
+
+  # ============================================================
+  # CONTAINER 1 - OLLAMA / LLM
+  # ============================================================
+  rag_ollama:
+    image: ollama/ollama:latest
+    container_name: rag_ollama
+
+    environment:
+      # Quantização do KV Cache para 4-bit
+      - OLLAMA_KV_CACHE_TYPE=q4_0
+      # Habilita Flash Attention para otimizar VRAM adicional
+      - OLLAMA_FLASH_ATTENTION=1
+
+    volumes:
+      - ollama_storage:/root/.ollama
+
+    ports:
+      - "11434:11434"
+
+    networks:
+      - rag_network
+
+    restart: unless-stopped
+
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+
+  # ============================================================
+  # CONTAINER 2 - CHROMADB
+  # ============================================================
+  rag_chromadb:
+    image: chromadb/chroma:0.5.3
+    container_name: rag_chromadb
+
+    volumes:
+      - ./chroma_data:/chroma/chroma
+
+    ports:
+      - "8000:8000"
+
+    environment:
+      - IS_PERSISTENT=TRUE
+      - ANONYMIZED_TELEMETRY=FALSE
+
+    networks:
+      - rag_network
+
+    restart: unless-stopped
+
+
+  # ============================================================
+  # CONTAINER 3 - GRADIO + RAG + TTS
+  # ============================================================
+  rag_gradio_app:
+    build:
+      context: ./app
+
+    container_name: rag_gradio_app
+
+    ports:
+      - "7860:7860"
+
+    volumes:
+      - ./data:/app/data
+      - ./app:/app
+      - ./audio:/app/audio
+      - hf_cache:/root/.cache/huggingface
+
+    environment:
+
+      # Ollama
+      - OLLAMA_BASE_URL=http://rag_ollama:11434
+
+      # Chroma
+      - CHROMA_HOST=rag_chromadb
+      - CHROMA_PORT=8000
+
+      # Gradio
+      - GRADIO_SERVER_NAME=0.0.0.0
+
+      # Modelos
+      - CHAT_MODEL=qwen3:8b
+      - PODCAST_MODEL=qwen3:8b
+      - SUMMARY_MODEL=llama3.2:1b
+
+      # Modelos de Embedding e Reranker (Adicionados)
+      - EMBEDDING_MODEL=intfloat/multilingual-e5-large-instruct
+      - RERANKER_MODEL=BAAI/bge-reranker-v2-m3
+
+      # Kokoro
+      - KOKORO_DEVICE=cuda
+      - KOKORO_VOICE_A=pm_alex
+      - KOKORO_VOICE_B=pf_dora
+
+      # Telemetria
+      - ANONYMIZED_TELEMETRY=FALSE
+      - CHROMA_TELEMETRY_IMPL=chromadb.telemetry.dummy.DummyTelemetry
+      - TOKENIZERS_PARALLELISM=false
+      - ORT_LOGGING_LEVEL=3
+
+    networks:
+      - rag_network
+
+    depends_on:
+      - rag_ollama
+      - rag_chromadb
+
+    restart: unless-stopped
+
+    # Permite que o container do Gradio/TTS utilize a RTX 5070
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+volumes:
+  ollama_storage:
+  hf_cache:
