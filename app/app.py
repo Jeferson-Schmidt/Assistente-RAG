@@ -1274,7 +1274,7 @@ def testar_voz(voice):
 with gr.Blocks(title="Advanced RAG Corporativo") as demo:
 
     gr.Markdown("""
-# 🚀 Advanced RAG Corporativo
+# 🚀 Advanced RAG Assistente de Conhecimento.
 ### RAG local + Ollama + ChromaDB + Podcast de Estudo
 Sistema totalmente local para consulta de documentos e geração de debates em áudio.
 """)
