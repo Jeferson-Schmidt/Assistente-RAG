@@ -86,6 +86,10 @@ services:
 
     environment:
 
+      # Autenticação (obrigatória): valores vêm do arquivo .env, que não vai para o git
+      - APP_USER=${APP_USER:?Defina APP_USER no arquivo .env (veja .env.example)}
+      - APP_PASS=${APP_PASS:?Defina APP_PASS no arquivo .env (veja .env.example)}
+
       # Ollama
       - OLLAMA_BASE_URL=http://rag_ollama:11434
 
