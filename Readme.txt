@@ -6,6 +6,26 @@ docker exec -it rag_ollama ollama pull llama3.2:1b
 
 Se quiser testar outros modelos maiores, de acordo com o seu hardware, apenas baixe eles com os comandos acima, altere no docker-compose e no app.py.
 
+Autenticação (obrigatória, faça antes de subir o sistema):
+
+O sistema pede usuário e senha na tela de login. Não existe usuário nem senha padrão no código:
+as credenciais ficam só no arquivo .env, que está no .gitignore e nunca vai para o GitHub.
+
+1. Copie o modelo:      copy .env.example .env      (no Linux/WSL: cp .env.example .env)
+2. Edite o .env e preencha APP_USER e APP_PASS. A senha precisa ter pelo menos 12 caracteres.
+3. Suba normalmente com o docker compose (comandos abaixo).
+
+Sem o .env, o docker compose para com a mensagem "Defina APP_USER no arquivo .env".
+Se o app for iniciado fora do Docker sem essas variáveis, ele também não sobe.
+
+Para trocar a senha, edite o .env e execute:
+
+docker compose up -d
+
+Por que isso mudou: versões antigas tinham usuário e senha padrão escritos no app.py,
+visíveis a qualquer pessoa no repositório público. Quem usava essa senha deve trocá-la,
+porque ela continua no histórico do git.
+
 Depois de os modelos serem baixados, execute:
 
 docker compose up -d --build

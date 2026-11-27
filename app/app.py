@@ -78,8 +78,19 @@ SEPARADOR_FONTES = "\n\n---\n📚 **Fontes:**"
 # AUTENTICAÇÃO
 # ============================================================
 
-AUTH_USER = os.getenv("APP_USER", "beta")
-AUTH_PASS = os.getenv("APP_PASS", "teste123")
+# Credenciais obrigatórias, lidas do ambiente (arquivo .env, fora do git).
+# Sem elas o app não inicia: não existe usuário ou senha padrão no código.
+AUTH_USER = os.getenv("APP_USER", "").strip()
+AUTH_PASS = os.getenv("APP_PASS", "")
+
+if not AUTH_USER or not AUTH_PASS:
+    raise SystemExit(
+        "ERRO: defina APP_USER e APP_PASS no arquivo .env "
+        "(veja .env.example e a seção Autenticação do Readme.txt)."
+    )
+
+if len(AUTH_PASS) < 12:
+    raise SystemExit("ERRO: APP_PASS precisa ter pelo menos 12 caracteres.")
 
 # ============================================================
 # CRIA DIRETÓRIOS
